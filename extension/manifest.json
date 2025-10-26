@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Copilot Automator",
+  "description": "Run Copilot flows from a full-page UI or background service worker.",
+  "version": "1.0.0",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://copilot.microsoft.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "copilot-shell.html",
+        "shell.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "action": {}
+}

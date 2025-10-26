@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Copilot Automator</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* deep navy */
+      --card:#0b1220;
+      --muted:#94a3b8;
+      --accent:#7c3aed; /* violet */
+      --success:#16a34a;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.03);
+      --card-radius:12px;
+      --gap:12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071021 0%, #071629 60%);color:#e6eef8}
+    main{display:flex;align-items:center;justify-content:center;height:100%;padding:24px}
+  #statusPanel{width:980px;max-width:96%;background:linear-gradient(180deg,var(--card), rgba(10,16,30,0.9));border-radius:var(--card-radius);box-shadow:0 10px 30px rgba(2,6,23,0.6);padding:20px;display:grid;grid-template-columns:1fr 360px;grid-gap:18px;align-items:start}
+
+    #statusPanel h1{margin:0;font-size:20px;letter-spacing:-0.2px}
+    #statusPanel .muted{color:var(--muted);margin-top:6px;font-size:13px}
+
+    .statusRow{display:flex;align-items:center;gap:12px;margin-top:12px}
+    .label{color:var(--muted);font-size:13px}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--glass);font-weight:600;color:#dff3ff}
+    .badge .dot{width:10px;height:10px;border-radius:50%;background:#9ca3ff;box-shadow:0 0 8px rgba(156,163,255,0.12)}
+    .badge.connecting .dot{background:orange}
+    .badge.connected .dot{background:var(--success)}
+    .badge.disconnected .dot{background:#94a3b8}
+    .badge.closed .dot{background:var(--danger)}
+
+    .controls{display:flex;gap:8px;margin-top:14px}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;padding:8px 12px;border-radius:10px;cursor:pointer;transition:all .12s ease;font-weight:600}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(7,10,20,0.6)}
+    .btn.warn{border-color:rgba(255,80,80,0.14);color:var(--danger)}
+
+    #logContainer{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;height:420px;display:flex;flex-direction:column}
+    #logHeader{font-size:13px;color:var(--muted);margin-bottom:8px}
+    #log{flex:1;overflow:auto;padding-right:6px}
+    .logRow{padding:8px;border-radius:8px;margin-bottom:8px;font-size:13px;display:flex;gap:8px;align-items:center}
+    .logRow.info{background:rgba(255,255,255,0.02);color:#cfe8ff}
+    .logRow.state{background:linear-gradient(90deg, rgba(124,58,237,0.06), rgba(16,185,129,0.02));}
+    .logRow.action{background:linear-gradient(90deg, rgba(99,102,241,0.03), rgba(99,102,241,0.01));}
+    .logRow.bridge{background:rgba(255,255,255,0.015);}
+    .logRow.error{background:linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));color:#ffd6d6}
+
+    /* right column summary */
+    .rightCol{display:flex;flex-direction:column;gap:12px}
+    .card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* toast */
+    #toast{position:fixed;right:18px;bottom:18px;background:#0b1220;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 8px 30px rgba(0,0,0,0.6);opacity:0;transform:translateY(10px);transition:all .18s ease}
+    #toast.show{opacity:1;transform:none}
+
+    @media(max-width:880px){
+      #statusPanel{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <main id="main">
+    <section id="statusPanel">
+      <h1>Copilot Automator</h1>
+      <p class="muted">A lightweight shell for WebSocket-driven Copilot automation. </p>
+      <div class="statusRow">
+        <div class="label">WebSocket:</div>
+        <div id="wsStatus" class="badge"> <span id="wsState">disconnected</span> </div>
+      </div>
+
+        <div class="controls">
+          <button id="closeWs" class="btn warn">Close WS</button>
+          <button id="reconnectWs" class="btn">Reconnect WS</button>
+          <button id="copyUrl" class="btn">Copy WS URL</button>
+        </div>
+
+        <div id="logContainer">
+          <div id="logHeader">Event Log</div>
+          <div id="log"></div>
+        </div>
+
+      
+      <aside class="rightCol">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:700">How to use</div>
+              <div class="small">Run these locally to control Copilot flows</div>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <div class="small">1) Start the WebSocket bridge (Python)</div>
+            <pre style="background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-top:8px;color:#cfe8ff"># In PowerShell
+  PS &gt; python -m websocket.bridge_ws_server
+              </pre>
+
+            <div class="small" style="margin-top:8px">2) Run the controller to drive Copilot</div>
+            <pre style="background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-top:8px;color:#cfe8ff"># In PowerShell
+  PS &gt; python controller.py
+              </pre>
+
+            <div class="small" style="margin-top:10px;color:var(--muted)">Make sure you run both scripts from the repository root. The bridge listens at <code>ws://localhost:8765</code> by default.</div>
+          </div>
+        </div>
+
+        <div class="card small">
+          <div style="font-weight:700;margin-bottom:6px">Notes</div>
+          - The bridge accepts prompts and forwards replies to this UI.
+          <br>- `controller.py` captures page artifacts (screenshot, HTML) and sends them as attachments.
+          <br>- For Windows PowerShell, use the commands shown above.
+        </div>
+      </aside>
+    </section>
+  </main>
+  <script src="shell.js"></script>
+  <script src="copilot-shell-bridge.js"></script>
+</body>
+</html>
