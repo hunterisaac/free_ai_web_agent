@@ -1,4 +1,4 @@
-Copilot Automator — Local Setup
+Copilot Automator — Local Setup (NOTE: this is a vibe-coded project used to experiment with the use of AI for programming)
 
 This repository contains a Chrome extension UI and a local controller that together let you automate Copilot flows using a local WebSocket bridge.
 
